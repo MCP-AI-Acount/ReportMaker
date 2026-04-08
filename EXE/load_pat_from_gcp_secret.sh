@@ -25,13 +25,18 @@ fi
 
 export PROJECT_ID
 
+_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -x "$_SCRIPT_DIR/ensure_gcloud_session.sh" ]]; then
+  bash "$_SCRIPT_DIR/ensure_gcloud_session.sh"
+fi
+
 GITHUB_TOKEN_SECRET_NAME="${GITHUB_TOKEN_SECRET_NAME:-github-token}"
 GH_TOKEN_SECRET_NAME="${GH_TOKEN_SECRET_NAME:-gh-token}"
 
-_active_account="$(gcloud config get-value account 2>/dev/null || true)"
-if [[ -z "$_active_account" || "$_active_account" == "(unset)" ]]; then
-  echo "[load_pat_from_gcp_secret] gcloud 활성 계정 없음. 한 번 실행:"
-  echo "  gcloud auth login"
+_acct="$(gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null | head -1)"
+if [[ -z "$_acct" ]]; then
+  echo "[load_pat_from_gcp_secret] ACTIVE gcloud 계정 없음 (config만 남은 경우와 구분)."
+  echo "  gcloud auth login --no-launch-browser"
   echo "  gcloud config set project ${PROJECT_ID}"
   exit 1
 fi
