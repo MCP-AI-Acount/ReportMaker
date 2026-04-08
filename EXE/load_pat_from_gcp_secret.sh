@@ -3,17 +3,34 @@
 
 set -euo pipefail
 
+# 우선순위: PROJECT_ID > GOOGLE_CLOUD_PROJECT > gcloud 현재 프로젝트 > (선택) 기본값
+# VM/Cloud Run에서 GOOGLE_CLOUD_PROJECT가 자주 잡힘
+DEFAULT_GCP_PROJECT_ID="${DEFAULT_GCP_PROJECT_ID:-project-6868f681-721e-4d33-b59}"
+
 if ! command -v gcloud >/dev/null 2>&1; then
-  echo "[load_pat_from_gcp_secret] gcloud not found"
+  echo "[load_pat_from_gcp_secret] gcloud 없음. 설치하거나 PAT는 ~/.config/agent-secrets.env 등으로 주입."
   exit 1
 fi
 
-PROJECT_ID="${PROJECT_ID:-$(gcloud config get-value project 2>/dev/null || true)}"
+PROJECT_ID="${PROJECT_ID:-}"
+if [[ -z "$PROJECT_ID" && -n "${GOOGLE_CLOUD_PROJECT:-}" ]]; then
+  PROJECT_ID="$GOOGLE_CLOUD_PROJECT"
+fi
+if [[ -z "$PROJECT_ID" ]]; then
+  PROJECT_ID="$(gcloud config get-value project 2>/dev/null || true)"
+fi
+if [[ -z "$PROJECT_ID" || "$PROJECT_ID" == "(unset)" ]]; then
+  PROJECT_ID="$DEFAULT_GCP_PROJECT_ID"
+fi
+
 GITHUB_TOKEN_SECRET_NAME="${GITHUB_TOKEN_SECRET_NAME:-github-token}"
 GH_TOKEN_SECRET_NAME="${GH_TOKEN_SECRET_NAME:-gh-token}"
 
-if [[ -z "$PROJECT_ID" ]]; then
-  echo "[load_pat_from_gcp_secret] PROJECT_ID is empty"
+_active_account="$(gcloud config get-value account 2>/dev/null || true)"
+if [[ -z "$_active_account" || "$_active_account" == "(unset)" ]]; then
+  echo "[load_pat_from_gcp_secret] gcloud 활성 계정 없음. 한 번 실행:"
+  echo "  gcloud auth login"
+  echo "  gcloud config set project ${PROJECT_ID}"
   exit 1
 fi
 
@@ -28,7 +45,6 @@ if gh_token_value="$(gcloud secrets versions access latest --secret="$GH_TOKEN_S
   export GH_TOKEN="$gh_token_value"
 fi
 
-# GH_TOKEN 미존재 시 GITHUB_TOKEN 값으로 채움
 if [[ -z "${GH_TOKEN:-}" && -n "${GITHUB_TOKEN:-}" ]]; then
   export GH_TOKEN="$GITHUB_TOKEN"
 fi
@@ -38,8 +54,10 @@ if [[ -z "${GITHUB_TOKEN:-}" && -n "${GH_TOKEN:-}" ]]; then
 fi
 
 if [[ -z "${GITHUB_TOKEN:-}" ]]; then
-  echo "[load_pat_from_gcp_secret] token not loaded from secret manager"
+  echo "[load_pat_from_gcp_secret] Secret에서 토큰 로드 실패 (프로젝트=${PROJECT_ID}, secret=${GITHUB_TOKEN_SECRET_NAME})"
+  echo "  gcloud secrets list --project=${PROJECT_ID}"
+  echo "  IAM: secretAccessor 권한 확인"
   exit 1
 fi
 
-echo "[load_pat_from_gcp_secret] token loaded from secret manager"
+echo "[load_pat_from_gcp_secret] OK (project=${PROJECT_ID})"
