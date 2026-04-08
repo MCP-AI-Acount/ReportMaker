@@ -26,7 +26,7 @@ fi
 export PROJECT_ID
 
 _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -x "$_SCRIPT_DIR/ensure_gcloud_session.sh" ]]; then
+if [[ -f "$_SCRIPT_DIR/ensure_gcloud_session.sh" ]]; then
   bash "$_SCRIPT_DIR/ensure_gcloud_session.sh"
 fi
 

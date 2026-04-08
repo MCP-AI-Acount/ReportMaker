@@ -40,7 +40,7 @@ elif [[ -f "$ALT_SECRETS_FILE" ]]; then
   set +a
 fi
 
-if [[ -z "${GITHUB_TOKEN:-}" && -x "$GCP_SECRET_LOADER" ]]; then
+if [[ -z "${GITHUB_TOKEN:-}" && -f "$GCP_SECRET_LOADER" ]]; then
   bash "$GCP_SECRET_LOADER"
 fi
 if [[ -z "${GITHUB_TOKEN:-}" ]]; then
