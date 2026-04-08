@@ -8,6 +8,7 @@ REMOTE_NAME="${REMOTE_NAME:-origin}"
 BASE_BRANCH="${BASE_BRANCH:-main}"
 SECRETS_FILE="${SECRETS_FILE:-$HOME/.config/agent-secrets.env}"
 ALT_SECRETS_FILE="${ALT_SECRETS_FILE:-$REPO_DIR/temp/agent-secrets.env}"
+GCP_SECRET_LOADER="${GCP_SECRET_LOADER:-$REPO_DIR/EXE/load_pat_from_gcp_secret.sh}"
 COMMIT_MESSAGE="${1:-}"
 PR_TITLE="${2:-}"
 
@@ -33,6 +34,10 @@ elif [[ -f "$ALT_SECRETS_FILE" ]]; then
   # shellcheck disable=SC1090
   source "$ALT_SECRETS_FILE"
   set +a
+fi
+
+if [[ -z "${GITHUB_TOKEN:-}" && -x "$GCP_SECRET_LOADER" ]]; then
+  bash "$GCP_SECRET_LOADER" >/dev/null 2>&1 || true
 fi
 
 if [[ -z "$(git status --porcelain)" ]]; then
@@ -61,7 +66,8 @@ if [[ -n "${GITHUB_TOKEN:-}" ]]; then
   git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${AUTH_HEADER}" \
     push -u "$REMOTE_NAME" "$CURRENT_BRANCH"
 else
-  git push -u "$REMOTE_NAME" "$CURRENT_BRANCH"
+  echo "GITHUB_TOKEN 없음: push 중단"
+  exit 1
 fi
 
 if [[ -z "$PR_TITLE" ]]; then

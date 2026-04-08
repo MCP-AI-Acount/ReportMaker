@@ -11,6 +11,7 @@ BASE_BRANCH="${BASE_BRANCH:-main}"
 COMMIT_PREFIX="${COMMIT_PREFIX:-auto: reportmaker sync}"
 SECRETS_FILE="${SECRETS_FILE:-$HOME/.config/agent-secrets.env}"
 ALT_SECRETS_FILE="${ALT_SECRETS_FILE:-$REPO_DIR/temp/agent-secrets.env}"
+GCP_SECRET_LOADER="${GCP_SECRET_LOADER:-$REPO_DIR/EXE/load_pat_from_gcp_secret.sh}"
 
 FLOW_SCRIPT="${REPO_DIR}/EXE/one_command_git_flow.sh"
 
@@ -31,6 +32,10 @@ elif [[ -f "$ALT_SECRETS_FILE" ]]; then
   # shellcheck disable=SC1090
   source "$ALT_SECRETS_FILE"
   set +a
+fi
+
+if [[ -z "${GITHUB_TOKEN:-}" && -x "$GCP_SECRET_LOADER" ]]; then
+  bash "$GCP_SECRET_LOADER" >/dev/null 2>&1 || true
 fi
 
 echo "[auto_push_pr_on_idle] started: repo=$REPO_DIR poll=${POLL_SECONDS}s idle=${IDLE_THRESHOLD_SECONDS}s"
