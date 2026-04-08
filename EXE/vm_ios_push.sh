@@ -1,20 +1,32 @@
 #!/usr/bin/env bash
-# VM(우분투)에서만 사용: 홈에 복사하거나 저장소 EXE 안에서 실행.
-#   chmod +x vm_ios_push.sh
-#   ./vm_ios_push.sh
-#   ./vm_ios_push.sh "커밋메시지" "PR제목"
-# REPO_ROOT가 다르면: export REPO_ROOT=/실제/ReportMaker/경로
+# ReportMaker·NewMCP 등 저장소 루트에 EXE/ios_push_with_pat.sh 가 있을 때 사용.
+#   chmod +x EXE/vm_ios_push.sh && ./EXE/vm_ios_push.sh
+# VM 기본 경로(/home/ubuntu/ReportMaker)가 없으면, 이 스크립트 위치(…/EXE)의 상위 폴더를 루트로 씀.
+# 다른 경로면: REPO_ROOT=/절대/경로 ./EXE/vm_ios_push.sh
 
 set -euo pipefail
 
-REPO_ROOT="${REPO_ROOT:-/home/ubuntu/ReportMaker}"
+_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_FROM_SCRIPT_ROOT="$(cd "$_SCRIPT_DIR/.." && pwd)"
+
+if [[ -n "${REPO_ROOT:-}" ]]; then
+  :
+elif [[ -f "$_FROM_SCRIPT_ROOT/EXE/ios_push_with_pat.sh" ]]; then
+  REPO_ROOT="$_FROM_SCRIPT_ROOT"
+elif [[ -f "/home/ubuntu/ReportMaker/EXE/ios_push_with_pat.sh" ]]; then
+  REPO_ROOT="/home/ubuntu/ReportMaker"
+else
+  echo "[vm_ios_push] EXE/ios_push_with_pat.sh 없음. 저장소 루트에서 실행하거나: export REPO_ROOT=/클론경로"
+  exit 1
+fi
+
 cd "$REPO_ROOT" || {
   echo "[vm_ios_push] cd 실패: $REPO_ROOT"
   exit 1
 }
 
 if [[ ! -f EXE/ios_push_with_pat.sh ]]; then
-  echo "[vm_ios_push] EXE/ios_push_with_pat.sh 없음. ReportMaker 루트인지 확인하고 git pull 하세요."
+  echo "[vm_ios_push] EXE/ios_push_with_pat.sh 없음 (REPO_ROOT=$REPO_ROOT)."
   exit 1
 fi
 
