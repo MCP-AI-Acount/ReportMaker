@@ -6,6 +6,8 @@ set -euo pipefail
 REPO_DIR="${REPO_DIR:-$(pwd)}"
 REMOTE_NAME="${REMOTE_NAME:-origin}"
 BASE_BRANCH="${BASE_BRANCH:-main}"
+SECRETS_FILE="${SECRETS_FILE:-$HOME/.config/agent-secrets.env}"
+ALT_SECRETS_FILE="${ALT_SECRETS_FILE:-$REPO_DIR/temp/agent-secrets.env}"
 COMMIT_MESSAGE="${1:-}"
 PR_TITLE="${2:-}"
 
@@ -19,6 +21,18 @@ cd "$REPO_DIR"
 if [[ ! -d .git ]]; then
   echo "git 저장소가 아닙니다: $REPO_DIR"
   exit 1
+fi
+
+if [[ -f "$SECRETS_FILE" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$SECRETS_FILE"
+  set +a
+elif [[ -f "$ALT_SECRETS_FILE" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$ALT_SECRETS_FILE"
+  set +a
 fi
 
 if [[ -z "$(git status --porcelain)" ]]; then
@@ -41,7 +55,14 @@ if [[ -z "$(git diff --cached --name-only)" ]]; then
 fi
 
 git commit -m "$COMMIT_MESSAGE"
-git push -u "$REMOTE_NAME" "$CURRENT_BRANCH"
+
+if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+  AUTH_HEADER="$(printf "x-access-token:%s" "$GITHUB_TOKEN" | base64)"
+  git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${AUTH_HEADER}" \
+    push -u "$REMOTE_NAME" "$CURRENT_BRANCH"
+else
+  git push -u "$REMOTE_NAME" "$CURRENT_BRANCH"
+fi
 
 if [[ -z "$PR_TITLE" ]]; then
   PR_TITLE="$COMMIT_MESSAGE"

@@ -9,6 +9,8 @@ POLL_SECONDS="${POLL_SECONDS:-15}"
 REMOTE_NAME="${REMOTE_NAME:-origin}"
 BASE_BRANCH="${BASE_BRANCH:-main}"
 COMMIT_PREFIX="${COMMIT_PREFIX:-auto: reportmaker sync}"
+SECRETS_FILE="${SECRETS_FILE:-$HOME/.config/agent-secrets.env}"
+ALT_SECRETS_FILE="${ALT_SECRETS_FILE:-$REPO_DIR/temp/agent-secrets.env}"
 
 FLOW_SCRIPT="${REPO_DIR}/EXE/one_command_git_flow.sh"
 
@@ -17,6 +19,18 @@ cd "$REPO_DIR"
 if [[ ! -x "$FLOW_SCRIPT" ]]; then
   echo "실행 스크립트 없음: $FLOW_SCRIPT"
   exit 1
+fi
+
+if [[ -f "$SECRETS_FILE" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$SECRETS_FILE"
+  set +a
+elif [[ -f "$ALT_SECRETS_FILE" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$ALT_SECRETS_FILE"
+  set +a
 fi
 
 echo "[auto_push_pr_on_idle] started: repo=$REPO_DIR poll=${POLL_SECONDS}s idle=${IDLE_THRESHOLD_SECONDS}s"
