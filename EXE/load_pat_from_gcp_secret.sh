@@ -23,6 +23,8 @@ if [[ -z "$PROJECT_ID" || "$PROJECT_ID" == "(unset)" ]]; then
   PROJECT_ID="$DEFAULT_GCP_PROJECT_ID"
 fi
 
+export PROJECT_ID
+
 GITHUB_TOKEN_SECRET_NAME="${GITHUB_TOKEN_SECRET_NAME:-github-token}"
 GH_TOKEN_SECRET_NAME="${GH_TOKEN_SECRET_NAME:-gh-token}"
 
