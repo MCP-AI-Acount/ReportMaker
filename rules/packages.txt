@@ -1,0 +1,7 @@
+ReportMaker — 외부 DLL / NuGet (Unity Plugins)
+
+PdfPig (PDF 텍스트 추출)
+- NuGet: UglyToad.PdfPig
+- 사용 버전: 1.7.0-custom-5 (안정 태그가 없어 prerelease로 설치)
+- 배치: Assets/Plugins/PdfPig/UglyToad.PdfPig*.dll (Core, Fonts, Tokenization, Tokens, 메인 PdfPig)
+- 갱신 방법: 프로젝트 루트에서 temp_nuget 등 임시 폴더에 netstandard2.1 classlib 만들고 `dotnet add package UglyToad.PdfPig --prerelease` 후 publish 출력물에서 UglyToad.*.dll만 Plugins에 복사
