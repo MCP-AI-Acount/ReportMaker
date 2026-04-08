@@ -574,6 +574,7 @@ GameObject:
   - component: {fileID: 722048811}
   - component: {fileID: 722048813}
   - component: {fileID: 722048812}
+  - component: {fileID: 2040100300}
   m_Layer: 5
   m_Name: Graph
   m_TagString: Untagged
@@ -1123,6 +1124,27 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 999906254}
   m_CullTransparentMesh: 1
+--- !u!114 &2040100300
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 999906254}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7f3a2b1c4d5468790ab12cd34ef56ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EachPage
+  barValues:
+  - 12
+  - 28
+  - 9
+  - 35
+  - 18
+  barColor: {r: 0.35, g: 0.55, b: 0.95, a: 1}
+  barSpacing: 4
+  padding: 12
 --- !u!1 &1109580699
 GameObject:
   m_ObjectHideFlags: 0
