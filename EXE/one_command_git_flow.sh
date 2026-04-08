@@ -24,6 +24,10 @@ if [[ ! -d .git ]]; then
   exit 1
 fi
 
+if [[ "${ONE_COMMAND_GIT_FETCH:-1}" != "0" ]]; then
+  git fetch "${REMOTE_NAME}" --prune 2>/dev/null || true
+fi
+
 if [[ -f "$SECRETS_FILE" ]]; then
   set -a
   # shellcheck disable=SC1090
@@ -63,10 +67,21 @@ if [[ -z "$(git status --porcelain)" ]]; then
     AHEAD="${BASH_REMATCH[1]}"
   elif git rev-parse --verify '@{u}' >/dev/null 2>&1; then
     AHEAD=$(git rev-list --count '@{u}..HEAD' 2>/dev/null || echo 0)
-  elif git show-ref --verify --quiet "refs/remotes/${REMOTE_NAME}/${CURRENT_BRANCH}"; then
-    AHEAD=$(git rev-list --count "${REMOTE_NAME}/${CURRENT_BRANCH}..HEAD" 2>/dev/null || echo 0)
-  elif git show-ref --verify --quiet "refs/remotes/${REMOTE_NAME}/${BASE_BRANCH}"; then
-    AHEAD=$(git rev-list --count "${REMOTE_NAME}/${BASE_BRANCH}..HEAD" 2>/dev/null || echo 0)
+  else
+    _def_head=""
+    _def_head="$(git symbolic-ref refs/remotes/${REMOTE_NAME}/HEAD 2>/dev/null | sed "s@^refs/remotes/${REMOTE_NAME}/@@" || true)"
+    for _ref in \
+      "${REMOTE_NAME}/${CURRENT_BRANCH}" \
+      "${REMOTE_NAME}/${BASE_BRANCH}" \
+      "${REMOTE_NAME}/${_def_head}" \
+      "${REMOTE_NAME}/main" \
+      "${REMOTE_NAME}/master"; do
+      [[ -z "$_ref" || "$_ref" == "${REMOTE_NAME}/" ]] && continue
+      if git show-ref --verify --quiet "refs/remotes/${_ref}"; then
+        AHEAD=$(git rev-list --count "${_ref}..HEAD" 2>/dev/null || echo 0)
+        [[ "${AHEAD:-0}" -gt 0 ]] && break
+      fi
+    done
   fi
   if [[ "${AHEAD:-0}" -gt 0 ]]; then
     echo "[one_command] 작업 트리 깨끗함, 로컬만 ${AHEAD}커밋 앞섬 → push만 시도"
@@ -83,7 +98,9 @@ if [[ -z "$(git status --porcelain)" ]]; then
     fi
     exit 0
   fi
-  echo "변경사항이 없고, 원격에 올릴 앞선 커밋도 없습니다."
+  echo "[one_command] 변경사항이 없고, 원격에 올릴 앞선 커밋도 감지되지 않았습니다."
+  echo "[one_command] 진단: REPO_DIR=$REPO_DIR branch=${CURRENT_BRANCH:-"(없음)"} 첫줄=$(git status -sb | head -1)"
+  echo "[one_command] 힌트: 다른 저장소를 연 건 아닌지 확인. 원격이 오래됐으면 ONE_COMMAND_GIT_FETCH=1(기본) 유지 후 재실행."
   exit 0
 fi
 if [[ -z "$CURRENT_BRANCH" || "$CURRENT_BRANCH" == "$BASE_BRANCH" ]]; then
