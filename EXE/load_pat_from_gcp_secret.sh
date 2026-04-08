@@ -23,6 +23,8 @@ if [[ -z "$PROJECT_ID" || "$PROJECT_ID" == "(unset)" ]]; then
   PROJECT_ID="$DEFAULT_GCP_PROJECT_ID"
 fi
 
+export PROJECT_ID
+
 GITHUB_TOKEN_SECRET_NAME="${GITHUB_TOKEN_SECRET_NAME:-github-token}"
 GH_TOKEN_SECRET_NAME="${GH_TOKEN_SECRET_NAME:-gh-token}"
 
@@ -54,9 +56,12 @@ if [[ -z "${GITHUB_TOKEN:-}" && -n "${GH_TOKEN:-}" ]]; then
 fi
 
 if [[ -z "${GITHUB_TOKEN:-}" ]]; then
-  echo "[load_pat_from_gcp_secret] Secret에서 토큰 로드 실패 (프로젝트=${PROJECT_ID}, secret=${GITHUB_TOKEN_SECRET_NAME})"
+  echo "[load_pat_from_gcp_secret] token not loaded from Secret Manager"
+  echo "[load_pat_from_gcp_secret] 병목은 보통 gcloud 로그인 없음 또는 IAM(secretAccessor) 부족 (프로젝트=${PROJECT_ID}, secret=${GITHUB_TOKEN_SECRET_NAME})"
+  echo "  gcloud auth login"
+  echo "  gcloud config set project ${PROJECT_ID}"
   echo "  gcloud secrets list --project=${PROJECT_ID}"
-  echo "  IAM: secretAccessor 권한 확인"
+  echo "  IAM: roles/secretmanager.secretAccessor"
   exit 1
 fi
 

@@ -41,8 +41,13 @@ elif [[ -f "$ALT_SECRETS_FILE" ]]; then
 fi
 
 if [[ -z "${GITHUB_TOKEN:-}" && -x "$GCP_SECRET_LOADER" ]]; then
-  # 실패 로그는 보이게(디버그). 성공 시에만 조용히 해도 됨
-  bash "$GCP_SECRET_LOADER" || true
+  bash "$GCP_SECRET_LOADER"
+fi
+if [[ -z "${GITHUB_TOKEN:-}" ]]; then
+  echo "[one_command] GITHUB_TOKEN 없음 — load_pat 실패·미실행이거나 agent-secrets에 토큰 없음."
+  echo "[one_command] Secret Manager 사용 시 이 세션에서 gcloud auth login + secretAccessor 권한 필요."
+  echo "  또는 ~/.config/agent-secrets.env / ${REPO_DIR}/temp/agent-secrets.env 에 GITHUB_TOKEN="
+  exit 1
 fi
 
 push_with_pat() {
