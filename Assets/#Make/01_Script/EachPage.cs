@@ -66,18 +66,20 @@ public class EachPage : MonoBehaviour
             var colGo = new GameObject("BarColumn", typeof(RectTransform));
             colGo.transform.SetParent(_chartHost, false);
             var colRt = colGo.GetComponent<RectTransform>();
-            float left = (float)i / n;
-            float right = (float)(i + 1) / n;
-            colRt.anchorMin = new Vector2(left, 0f);
-            colRt.anchorMax = new Vector2(right, 1f);
-            colRt.offsetMin = new Vector2(halfGap, padding);
-            colRt.offsetMax = new Vector2(-halfGap, -padding);
+            // 가로형으로 변경: 세로로 배치된 행들
+            float bottom = (float)i / n;
+            float top = (float)(i + 1) / n;
+            colRt.anchorMin = new Vector2(0f, bottom);
+            colRt.anchorMax = new Vector2(1f, top);
+            colRt.offsetMin = new Vector2(padding, halfGap);
+            colRt.offsetMax = new Vector2(-padding, -halfGap);
 
             var barGo = new GameObject("Bar", typeof(RectTransform), typeof(Image));
             barGo.transform.SetParent(colGo.transform, false);
             var barRt = barGo.GetComponent<RectTransform>();
-            barRt.anchorMin = new Vector2(0.08f, 0f);
-            barRt.anchorMax = new Vector2(0.92f, Mathf.Max(0.02f, t));
+            // 가로형 바: 왼쪽에서 오른쪽으로 확장
+            barRt.anchorMin = new Vector2(0f, 0.08f);
+            barRt.anchorMax = new Vector2(Mathf.Max(0.02f, t), 0.92f);
             barRt.offsetMin = Vector2.zero;
             barRt.offsetMax = Vector2.zero;
 
